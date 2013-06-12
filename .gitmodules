@@ -1,0 +1,3 @@
+[submodule "pretzel"]
+	path = pretzel
+	url = git://github.com/aslpavel/pretzel.git
