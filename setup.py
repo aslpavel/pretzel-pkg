@@ -16,5 +16,6 @@ setup(name='pretzel',
       version='1.0',
       author='Pavel Aslanov',
       description='Pretzel asynchronous python framework',
+      long_description=open('README.md').read(),
       url='https://github.com/aslpavel/pretzel',
       packages=package_full('pretzel'))
