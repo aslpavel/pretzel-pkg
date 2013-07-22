@@ -13,7 +13,7 @@ def package_full(package):
     return packages
 
 setup(name='pretzel',
-      version='1.0.6',
+      version='1.0.8',
       author='Pavel Aslanov',
       description='Pretzel asynchronous python framework',
       long_description=open('README.rst').read(),

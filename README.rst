@@ -53,65 +53,101 @@ to create
 | ``Task`` like object. To use this library you don't have to understand
 notion of
 | the monad. Simple asynchronous function would look like this.
-| \`\`\`python
-| from pretzel.monad import async
-| from pretzel.core imoprt sleep
 
-| @async
-| def print\_after(delay, \*args, \*\ *kwargs):
- """Calls print function after the lapse of ``delay`` sedonds.
- """
- yield sleep(delay) # execution will be resumed in delay seconds
- print(*\ args, \*\*kwargs)
-| ``To return something meaningful in python3 you can just use `return` keyword, but in python2 you have to use `do_return` function (it will also work in python3) as `return` with value cannot be used inside a generator function. Result of such asynchronous function is again a continuation monad, if exception is thrown during execution of its body, it is marshaled to receiver of the result and can be processed correctly. For example.``\ python
-| @async
-| def process\_error():
-|  @async
-|  def trhow\_after(delay, error):
-|  yield sleep(delay)
-|  raise error
+.. code:: python
 
-| try:
-|  yield throw\_after(1, ValueError('test error'))
-|  except ValueError as error:
-|  # process error in a meaningfull way
-|  do\_return('done') # exectly equivalent to: return 'done'
-| ``Asynchronous values (continuation monads) can be composed with two helper functions `async_all` and `async_any`.``\ python
-| @async
-| def composition\_example():
-|  yield async\_all([sleep(1), sleep(2)]) # will be resumed in 2 seconds
-|  yield async\_any([sleep(1), sleep(2)]) # will be resumed in 1 sedond
+    from pretzel.monad import async
+    from pretzel.core imoprt sleep
 
-| result\_all = yield async\_all([func1(), func2()]) # = (result1,
-result2)
-|  reuslt\_any = yield async\_any([func1(), func2()]) # = result1 \|
-result2
-| ```Cont` monad can also be called with callback function as its argument, in this case, on completion of asynchronous operation, callback will be called with `Result` monad. If callback function is not specified default, then default continuation callback will be used which only reports errors if any.``\ python
+    @async
+    def print_after(delay, *args, **kwargs):
+      """Calls print function after the lapse of `delay` sedonds.
+      """
+      yield sleep(delay)  # execution will be resumed in delay seconds
+      print(*args, **kwargs)
 
-            | sleep(1)(print)
-            | Result(val:1374307530.015137)
-            | sleep(None)()
-            | [continuation] error in coroutine started from
-            |  File "", line 1, in
-            | Traceback (most recent call last):
-            |  File "pretzel/monad/do.py", line 26, in do\_block
-            |  return value(block(\*a, \*\*kw))
-            |  File "pretzel/core/core.py", line 118, in sleep
-            |  do\_done(self.time\_queue.on(time() + delay))
-            | TypeError: unsupported operand type(s) for +: 'float' and
-            'NoneType'
-            | ``Inside body of asynchronous function you can `yield` not only `Cont` monad directly, but any object implementing `.__monad__()` method which returns `Cont` monad. There are many such types in this library, for example `Event```\ python
-            | @async
-            | def func():
-            |  print(1)
-            |  yield event
-            |  print(2)
-            |  print((yield event))
-            | event = Event()
-            | func()() # 1 is printed
-            | event('e0') # 2 is printed
-            | event('e1') # 'e1' is printed
-            | \`\`\`
+| To return something meaningful in python3 you can just use ``return``
+keyword,
+| but in python2 you have to use ``do_return`` function (it will also
+work in
+| python3) as ``return`` with value cannot be used inside a generator
+function.
+| Result of such asynchronous function is again a continuation monad, if
+exception
+| is thrown during execution of its body, it is marshaled to receiver of
+the
+| result and can be processed correctly. For example.
+
+.. code:: python
+
+    @async
+    def process_error():
+      @async
+      def trhow_after(delay, error):
+        yield sleep(delay)
+        raise error
+
+      try:
+        yield throw_after(1, ValueError('test error'))
+      except ValueError as error:
+        # process error in a meaningfull way
+      do_return('done')  # exectly equivalent to: return 'done'
+
+| Asynchronous values (continuation monads) can be composed with two
+helper
+| functions ``async_all`` and ``async_any``.
+
+.. code:: python
+
+    @async
+    def composition_example():
+      yield async_all([sleep(1), sleep(2)])  # will be resumed in 2 seconds
+      yield async_any([sleep(1), sleep(2)])  # will be resumed in 1 sedond
+
+      result_all = yield async_all([func1(), func2()])  # = (result1, result2)
+      reuslt_any = yield async_any([func1(), func2()])  # = result1 | result2
+
+| ``Cont`` monad can also be called with callback function as its
+argument, in this
+| case, on completion of asynchronous operation, callback will be called
+with
+| ``Result`` monad. If callback function is not specified default, then
+default
+| continuation callback will be used which only reports errors if any.
+
+.. code:: python
+
+    >>> sleep(1)(print)
+    Result(val:1374307530.015137)
+    >>> sleep(None)()
+    [continuation] error in coroutine started from
+      File "<console>", line 1, in <module>
+    Traceback (most recent call last):
+      File "pretzel/monad/do.py", line 26, in do_block
+        return value(block(*a, **kw))
+      File "pretzel/core/core.py", line 118, in sleep
+        do_done(self.time_queue.on(time() + delay))
+    TypeError: unsupported operand type(s) for +: 'float' and 'NoneType'
+
+| Inside body of asynchronous function you can ``yield`` not only
+``Cont`` monad
+| directly, but any object implementing ``.__monad__()`` method which
+returns ``Cont``
+| monad. There are many such types in this library, for example
+``Event``
+
+.. code:: python
+
+    @async
+    def func():
+      print(1)
+      yield event
+      print(2)
+      print((yield event))
+    event = Event()
+    func()()     # 1 is printed
+    event('e0')  # 2 is printed
+    event('e1')  # 'e1' is printed
 
 Main loop
 ---------
@@ -122,22 +158,23 @@ implement
 function will
 | work correctly only in presence of running I/O loop. Simplest way to
 | intialize and use ``Core`` object is to use ``@app`` decorator.
-| \`\`\`python
-| """Minimal pretzel application
 
-| Sleeps for one second, then prints 'done' and exits.
-| """
-| from pretzel.app import app
-| from pretzel.core import sleep
+.. code:: python
 
-| @app
-| def main():
-|  yield sleep(1)
-|  print('done')
+    """Minimal pretzel application
 
-| if **name** == '**main**\ ':
-|  main()
-| \`\`\`
+    Sleeps for one second, then prints 'done' and exits.
+    """
+    from pretzel.app import app
+    from pretzel.core import sleep
+
+    @app
+    def main():
+      yield sleep(1)
+      print('done')
+
+    if __name__ == '__main__':
+      main()
 
 Remoting
 --------
@@ -161,105 +198,141 @@ remote
 | process by yielding it. There is no need for pretzel to be installed
 on remote
 | machine.
-| \`\`\`python
-| import os
-| from pretzel.app import app
-| from pretzel.remoting import SSHConnection
 
-| @app
-| def main():
-|  """Connect to localhost via ssh and print remote process's pid
+.. code:: python
 
-| Note:
-|  You have to be able to login to the remote host without
-|  entering any password (by means of ssh keys) otherwise
-|  connecition will fail.
-|  """
-|  with (yield SSHConnection('localhost')) as conn:
-|  print((yield conn(os.getpid)()))
+    import os
+    from pretzel.app import app
+    from pretzel.remoting import SSHConnection
 
-| if **name** == '**main**\ ':
-|  main()
-| ``Connection can marshal any pickle-able object, or `Sender` object plus any object which is reducible to set of pickle-able and `Sender` objects. `Proxy` and `Connection` itself are examples of such objects. You can also create proxy object from any arbitrary object with `proxify` or `proxify_func`.``\ python
-| import os
-| from pretzel.app import app
-| from pretzel.remoting import SSHConnection, proxify
+    @app
+    def main():
+      """Connect to localhost via ssh and print remote process's pid
 
-| class Remote(object):
-|  """Object which will be used remotely
-|  """
-|  def **init**\ (self):
-|  self.value = 0
+      Note:
+        You have to be able to login to the remote host without
+        entering any password (by means of ssh keys) otherwise
+        connecition will fail.
+      """
+      with (yield SSHConnection('localhost')) as conn:
+        print((yield conn(os.getpid)()))
 
-| def next(self):
-|  self.value += 1
-|  return self.value
+    if __name__ == '__main__':
+      main()
 
-| def getpid(self):
-|  return os.getpid()
+| Connection can marshal any pickle-able object, or ``Sender`` object
+plus any object
+| which is reducible to set of pickle-able and ``Sender`` objects.
+``Proxy`` and
+| ``Connection`` itself are examples of such objects. You can also
+create proxy
+| object from any arbitrary object with ``proxify`` or ``proxify_func``.
 
-| @app
-| def main():
-|  with (yield SSHConnection('localhost')) as conn:
-|  with (yield proxify(conn(Remote)())) as o: # remote object proxy
-|  print(os.getpid(), (yield o.getpid())) # prints two different pids
-|  print((yield o.next())) # prints 1
-|  print((yield o.next())) # prints 2
+.. code:: python
 
-| if **name** == '**main**\ ':
-|  main()
-| ``But `Cont` monad is not marshallable, that is why there is special operation on proxy object `~` which is equivalent to `yield` inside asynchronous function. Here is an example of remote execution of asynchronous function.``\ python
-| from pretzel.app import app
-| from pretzel.process import process\_call
-| from pretzel.remoting import SSHConnection
+    import os
+    from pretzel.app import app
+    from pretzel.remoting import SSHConnection, proxify
 
-| @app
-| def main():
-|  """Execute 'ls' on remote machine and show result of the execution
-|  """
-|  with (yield SSHConnection('localhost')) as conn:
-|  out, err, code = yield ~conn(process\_call)('ls')
-|  print(out.decode())
+    class Remote(object):
+      """Object which will be used remotely
+      """
+      def __init__(self):
+        self.value = 0
 
-| if **name** == '**main**\ ':
-|  main()
-| ``There is also a way to work with multiple connections as if it one, by means of `composite_ssh_conn`. It accepts list of hosts and returns composite connection, which behaves as ordinary connection but returns set of results.``\ python
-| import os
-| from pretzel.app import app
-| from pretzel.remoting import composite\_ssh\_conn
+      def next(self):
+        self.value += 1
+        return self.value
 
-| @app
-| def main():
-|  hosts = ['localhost', 'localhost']
-|  with (yield composite\_ssh\_conn(hosts)) as conns:
-|  result = yield conns(os.getpid)()
-|  print(result) # List(25163, 25162) - iterable object of pids
+      def getpid(self):
+        return os.getpid()
 
-| if **name** == '**main**\ ':
-|  main()
-| ``Remoting submodule can be used as workaround for python's GIL, in a similar fashion to `multiprocessing` module. You can use `ForkConnection` (or `composite_fork_conn`) which behaves as `SSHConnection` but instead of connecting via ssh, it just spawns new process.``\ python
-| import time
-| from pretzel.app import app
-| from pretzel.remoting import composite\_fork\_conn
+    @app
+    def main():
+      with (yield SSHConnection('localhost')) as conn:
+        with (yield proxify(conn(Remote)())) as o:  # remote object proxy
+          print(os.getpid(), (yield o.getpid()))    # prints two different pids
+          print((yield o.next()))  # prints 1
+          print((yield o.next()))  # prints 2
 
-| def computation\_heavy\_task():
-|  """Some computation intensive task
-|  """
-|  start\_time = time.time()
-|  time.sleep(10)
-|  stop\_time = time.time()
-|  return int(stop\_time - start\_time)
+    if __name__ == '__main__':
+      main()
 
-| @app
-| def main():
-|  with (yield composite\_fork\_conn(10)) as conns: # create 10
-connections
-|  result = yield conns(computation\_heavy\_task)()
-|  print(result) # prints List(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)
+| But ``Cont`` monad is not marshallable, that is why there is special
+operation on
+| proxy object ``~`` which is equivalent to ``yield`` inside
+asynchronous function.
+| Here is an example of remote execution of asynchronous function.
 
-| if **name** == '**main**\ ':
-|  main()
-| \`\`\`
+.. code:: python
+
+    from pretzel.app import app
+    from pretzel.process import process_call
+    from pretzel.remoting import SSHConnection
+
+    @app
+    def main():
+      """Execute 'ls' on remote machine and show result of the execution
+      """
+      with (yield SSHConnection('localhost')) as conn:
+        out, err, code = yield ~conn(process_call)('ls')
+        print(out.decode())
+
+    if __name__ == '__main__':
+      main()
+
+| There is also a way to work with multiple connections as if it one, by
+means of
+| ``composite_ssh_conn``. It accepts list of hosts and returns composite
+connection,
+| which behaves as ordinary connection but returns set of results.
+
+.. code:: python
+
+    import os
+    from pretzel.app import app
+    from pretzel.remoting import composite_ssh_conn
+
+    @app
+    def main():
+      hosts = ['localhost', 'localhost']
+      with (yield composite_ssh_conn(hosts)) as conns:
+        result = yield conns(os.getpid)()
+        print(result)  # List(25163, 25162) - iterable object of pids
+
+    if __name__ == '__main__':
+      main()
+
+| Remoting submodule can be used as workaround for python's GIL, in a
+similar
+| fashion to ``multiprocessing`` module. You can use ``ForkConnection``
+(or
+| ``composite_fork_conn``) which behaves as ``SSHConnection`` but
+instead of
+| connecting via ssh, it just spawns new process.
+
+.. code:: python
+
+    import time
+    from pretzel.app import app
+    from pretzel.remoting import composite_fork_conn
+
+    def computation_heavy_task():
+      """Some computation intensive task
+      """
+      start_time = time.time()
+      time.sleep(10)
+      stop_time = time.time()
+      return int(stop_time - start_time)
+
+    @app
+    def main():
+      with (yield composite_fork_conn(10)) as conns:  # create 10 connections
+        result = yield conns(computation_heavy_task)()
+        print(result)  # prints List(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)
+
+    if __name__ == '__main__':
+      main()
 
 Examples
 --------
