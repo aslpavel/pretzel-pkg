@@ -46,7 +46,7 @@ the monad. Simple asynchronous function would look like this.
 
 ```python
 from pretzel.monad import async
-from pretzel.core imoprt sleep
+from pretzel.core import sleep
 
 @async
 def print_after(delay, *args, **kwargs):
@@ -67,7 +67,7 @@ result and can be processed correctly. For example.
 @async
 def process_error():
   @async
-  def trhow_after(delay, error):
+  def throw_after(delay, error):
     yield sleep(delay)
     raise error
 
@@ -102,10 +102,15 @@ Result(val:1374307530.015137)
 >>> sleep(None)()
 [continuation] error in coroutine started from
   File "<console>", line 1, in <module>
+`-------------------------------------------------------------------------------
+Host   : fiend
+Process: 13492
+Error  : TypeError("unsupported operand type(s) for +: 'float' and 'NoneType'")
+
 Traceback (most recent call last):
-  File "pretzel/monad/do.py", line 26, in do_block
-    return value(block(*a, **kw))
-  File "pretzel/core/core.py", line 118, in sleep
+  File "./pretzel/monad/do.py", line 26, in do_block
+    return value(block(*args, **kwargs))
+  File "./pretzel/core/core.py", line 118, in sleep
     do_done(self.time_queue.on(time() + delay))
 TypeError: unsupported operand type(s) for +: 'float' and 'NoneType'
 ```
@@ -157,8 +162,8 @@ for full list of available functions and their descriptions.
 Remoting
 --------
 Main reason for creation of this framework was to execute code on a set of
-machines via ssh connection. And its achieved by usage of `SSHConnection` class.
-`SSHConnection` object a callable object which returns proxy object for its
+machines via ssh connection. It is achieved by usage of `SSHConnection` class.
+`SSHConnection` is a callable object which returns proxy object for its
 argument. You can call proxy object, get its attributes or items `proxy[item]`,
 result of such operations is again a proxy object with this embedded operations.
 Proxy implements monad interface, and to get result of embedded chain of

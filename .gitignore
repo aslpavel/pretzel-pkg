@@ -1,5 +1,7 @@
 *.pyc
 *.pyo
 __pycache__
-MANIFEST
 dist
+build
+MANIFEST
+*.egg-info
